@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">MapTwitter</string>
     <string name="title_activity_maps">Map</string>
+
+    <!-- UTILS -->
+    <string name="ok">OK</string>
+
 </resources>
