@@ -4,5 +4,6 @@
 
     <!-- UTILS -->
     <string name="ok">OK</string>
+    <string name="restart">Restart</string>
 
 </resources>
