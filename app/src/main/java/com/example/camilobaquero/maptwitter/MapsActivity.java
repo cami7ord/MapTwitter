@@ -1,7 +1,6 @@
 package com.example.camilobaquero.maptwitter;
 
 import android.location.Location;
-import android.location.LocationListener;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,19 +9,21 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
 
     private final static String TAG = "MapsActivity";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
+    private boolean mRequestingLocationUpdates = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +88,12 @@ public class MapsActivity extends FragmentActivity implements
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        try {
+            mMap.setMyLocationEnabled(true);
+            //mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        } catch (SecurityException e) {
+            Log.e(TAG, "The user needs to accept the location permissions.");
+        }
     }
 
     private void setUpGoogleClient() {
@@ -107,12 +113,26 @@ public class MapsActivity extends FragmentActivity implements
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
             if (mLastLocation != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 15));
                 Log.e("Latitude", String.valueOf(mLastLocation.getLatitude()));
                 Log.e("Longitude", String.valueOf(mLastLocation.getLongitude()));
             }
 
+            if (mRequestingLocationUpdates) {
+                startLocationUpdates();
+            }
+
         } catch (SecurityException e) {
-            Log.e(TAG, "The user needs to accept the permissions.");
+            Log.e(TAG, "The user needs to accept the location permissions.");
+        }
+    }
+
+    protected void startLocationUpdates() {
+        try {
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, this);
+        } catch (SecurityException e) {
+            Log.e(TAG, "The user needs to accept the location permissions.");
         }
     }
 
@@ -130,21 +150,13 @@ public class MapsActivity extends FragmentActivity implements
 
     @Override
     public void onLocationChanged(Location location) {
-
+        mLastLocation = location;
+        updateUI();
     }
 
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
+    private void updateUI() {
+        Log.e("Update", "Updating");
+        Log.e("Latitude", String.valueOf(mLastLocation.getLatitude()));
+        Log.e("Longitude", String.valueOf(mLastLocation.getLongitude()));
     }
 }
