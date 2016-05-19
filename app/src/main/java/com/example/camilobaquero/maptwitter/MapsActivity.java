@@ -7,14 +7,22 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.camilobaquero.maptwitter.util.Utilities;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends AppCompatActivity implements
@@ -25,6 +33,7 @@ public class MapsActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
+    private PlaceAutocompleteFragment autocompleteFragment;
     private boolean mRequestingLocationUpdates = true;
 
     @Override
@@ -35,6 +44,12 @@ public class MapsActivity extends AppCompatActivity implements
         setUpMapIfNeeded();
         setUpGoogleClient();
         createLocationRequest();
+
+        //UI
+
+        autocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+        setAutoCompleteFragment();
+
     }
 
     @Override
@@ -46,9 +61,6 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         switch (item.getItemId()) {
             case R.id.action_restart:
                 Log.e(TAG, "Restart app");
@@ -113,7 +125,6 @@ public class MapsActivity extends AppCompatActivity implements
     private void setUpMap() {
         try {
             mMap.setMyLocationEnabled(true);
-            //mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
         } catch (SecurityException e) {
             Log.e(TAG, "The user needs to accept the location permissions.");
         }
@@ -125,6 +136,8 @@ public class MapsActivity extends AppCompatActivity implements
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
+                    .addApi(Places.GEO_DATA_API)
+                    .addApi(Places.PLACE_DETECTION_API)
                     .build();
         }
     }
@@ -167,11 +180,6 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onConnectionSuspended(int i) {  }
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) { }
-
-    @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
         updateUI();
@@ -182,4 +190,49 @@ public class MapsActivity extends AppCompatActivity implements
         Log.e("Latitude", String.valueOf(mLastLocation.getLatitude()));
         Log.e("Longitude", String.valueOf(mLastLocation.getLongitude()));
     }
+
+    private void setAutoCompleteFragment() {
+
+        autocompleteFragment.setBoundsBias(new LatLngBounds( // MEXICO
+                new LatLng(13.239945, -119.179688),
+                new LatLng(35.029996, -90.175781)));
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                Log.e(TAG, "Place: " + place.getName());
+                selectDestination(place.getLatLng());
+            }
+
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.e(TAG, "An error occurred: " + status);
+            }
+        });
+    }
+
+    private void selectDestination(LatLng latLng) {
+
+        mMap.clear();
+        mMap.addMarker(new MarkerOptions().position(latLng).title("Destino"));
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+        builder.include(latLng);
+
+        LatLngBounds bounds = builder.build();
+
+        int padding = Utilities.convertDpToPixel(16); // offset from edges of the map in pixels
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+        Log.e(TAG, "Moving camera...");
+        mMap.animateCamera(cu);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {  }
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) { }
+
 }
