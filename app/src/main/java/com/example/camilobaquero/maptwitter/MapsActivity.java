@@ -1,7 +1,10 @@
 package com.example.camilobaquero.maptwitter;
 
+import android.animation.ValueAnimator;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.util.Log;
@@ -42,11 +45,15 @@ public class MapsActivity extends AppCompatActivity implements
     private LocationRequest mLocationRequest;
     private PlaceAutocompleteFragment autocompleteFragment;
     private boolean mRequestingLocationUpdates = true;
+    private Snackbar snackbar;
 
     // UI
+    @BindView(R.id.coordinator_layout) CoordinatorLayout coordinatorLayout;
     @BindView(R.id.map_button_ok) AppCompatButton confirmationButton;
+
     @OnClick(R.id.map_button_ok) void confirmDestination() {
-        Log.e(TAG, "CLICKED");
+        snackbar.show();
+        animateMapPadding(true);
     }
     //
 
@@ -64,7 +71,7 @@ public class MapsActivity extends AppCompatActivity implements
         setAutoCompleteFragment();
 
         confirmationButton.setEnabled(false);
-
+        snackbar = Snackbar.make(coordinatorLayout, "Destino fijado", Snackbar.LENGTH_INDEFINITE);
     }
 
     @Override
@@ -84,7 +91,6 @@ public class MapsActivity extends AppCompatActivity implements
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     @Override
     protected void onStart() {
@@ -248,7 +254,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         LatLngBounds bounds = builder.build();
 
-        int padding = Utilities.convertDpToPixel(32); // offset from edges of the map in pixels
+        int padding = Utilities.convertDpToPixel(70); // offset from edges of the map in pixels
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
 
         Log.e(TAG, "Moving camera...");
@@ -260,11 +266,34 @@ public class MapsActivity extends AppCompatActivity implements
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 15));
         confirmationButton.setEnabled(false);
         autocompleteFragment.setText("");
+        snackbar.dismiss();
+        animateMapPadding(false);
+    }
 
+    private void animateMapPadding (boolean up) {
+
+        ValueAnimator animation;
+
+        int padding = Utilities.convertDpToPixel(48);
+
+        if(up)
+            animation = ValueAnimator.ofInt(0, padding);
+        else
+            animation = ValueAnimator.ofInt(padding, 0);
+
+        animation.setDuration(150);
+        animation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                mMap.setPadding(0, 0, 0, Integer.parseInt(valueAnimator.getAnimatedValue().toString()));
+            }
+        });
+        animation.start();
     }
 
     @Override
     public void onConnectionSuspended(int i) {  }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) { }
 }
