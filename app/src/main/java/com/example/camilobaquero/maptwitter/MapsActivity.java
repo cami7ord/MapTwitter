@@ -3,6 +3,7 @@ package com.example.camilobaquero.maptwitter;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatButton;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,7 +15,6 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
@@ -24,6 +24,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MapsActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -39,19 +43,27 @@ public class MapsActivity extends AppCompatActivity implements
     private PlaceAutocompleteFragment autocompleteFragment;
     private boolean mRequestingLocationUpdates = true;
 
+    // UI
+    @BindView(R.id.map_button_ok) AppCompatButton confirmationButton;
+    @OnClick(R.id.map_button_ok) void confirmDestination() {
+        Log.e(TAG, "CLICKED");
+    }
+    //
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        ButterKnife.bind(this);
 
         setUpMapIfNeeded();
         setUpGoogleClient();
         createLocationRequest();
 
-        //UI
-
         autocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
         setAutoCompleteFragment();
+
+        confirmationButton.setEnabled(false);
 
     }
 
@@ -67,6 +79,7 @@ public class MapsActivity extends AppCompatActivity implements
         switch (item.getItemId()) {
             case R.id.action_restart:
                 Log.e(TAG, "Restart app");
+                restart();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -141,8 +154,8 @@ public class MapsActivity extends AppCompatActivity implements
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
-                    .addApi(Places.GEO_DATA_API)
-                    .addApi(Places.PLACE_DETECTION_API)
+                    //.addApi(Places.GEO_DATA_API)
+                    //.addApi(Places.PLACE_DETECTION_API)
                     .build();
         }
     }
@@ -224,6 +237,8 @@ public class MapsActivity extends AppCompatActivity implements
 
     private void selectDestination(LatLng latLng) {
 
+        confirmationButton.setEnabled(true);
+
         mMap.clear();
         mMap.addMarker(new MarkerOptions().position(latLng).title("Destino"));
 
@@ -234,10 +249,18 @@ public class MapsActivity extends AppCompatActivity implements
         LatLngBounds bounds = builder.build();
 
         int padding = Utilities.convertDpToPixel(32); // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
 
         Log.e(TAG, "Moving camera...");
-        mMap.animateCamera(cu);
+        mMap.animateCamera(cameraUpdate);
+    }
+
+    private void restart() {
+        mMap.clear();
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 15));
+        confirmationButton.setEnabled(false);
+        autocompleteFragment.setText("");
+
     }
 
     @Override
