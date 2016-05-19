@@ -26,7 +26,10 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends AppCompatActivity implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        com.google.android.gms.location.LocationListener,
+        GoogleMap.OnMapLongClickListener{
 
     private final static String TAG = "MapsActivity";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
@@ -125,6 +128,8 @@ public class MapsActivity extends AppCompatActivity implements
     private void setUpMap() {
         try {
             mMap.setMyLocationEnabled(true);
+            mMap.setOnMapLongClickListener(this);
+            mMap.setPadding(0, Utilities.convertDpToPixel(70), Utilities.convertDpToPixel(4), 0);
         } catch (SecurityException e) {
             Log.e(TAG, "The user needs to accept the location permissions.");
         }
@@ -212,6 +217,11 @@ public class MapsActivity extends AppCompatActivity implements
         });
     }
 
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        selectDestination(latLng);
+    }
+
     private void selectDestination(LatLng latLng) {
 
         mMap.clear();
@@ -223,7 +233,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         LatLngBounds bounds = builder.build();
 
-        int padding = Utilities.convertDpToPixel(16); // offset from edges of the map in pixels
+        int padding = Utilities.convertDpToPixel(32); // offset from edges of the map in pixels
         CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
 
         Log.e(TAG, "Moving camera...");
@@ -234,5 +244,4 @@ public class MapsActivity extends AppCompatActivity implements
     public void onConnectionSuspended(int i) {  }
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) { }
-
 }
