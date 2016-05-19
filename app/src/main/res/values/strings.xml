@@ -6,4 +6,12 @@
     <string name="ok">OK</string>
     <string name="restart">Restart</string>
 
+    <!-- MESSAGES -->
+
+    <string name="too_far">Estás muy lejos del punto objetivo</string>
+    <string name="far">Estás lejos del punto objetivo</string>
+    <string name="near">Estás próximo al punto objetivo</string>
+    <string name="next_to">Estás muy próximo al punto objetivo</string>
+    <string name="in">Estás en el punto objetivo</string>
+
 </resources>

@@ -42,6 +42,7 @@ public class MapsActivity extends AppCompatActivity implements
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
+    private LatLng mDestination;
     private LocationRequest mLocationRequest;
     private PlaceAutocompleteFragment autocompleteFragment;
     private boolean mRequestingLocationUpdates = true;
@@ -52,8 +53,34 @@ public class MapsActivity extends AppCompatActivity implements
     @BindView(R.id.map_button_ok) AppCompatButton confirmationButton;
 
     @OnClick(R.id.map_button_ok) void confirmDestination() {
+        snackbar.setText(calculateDistance(mLastLocation, mDestination));
         snackbar.show();
         animateMapPadding(true);
+    }
+
+    private String calculateDistance(Location mLastLocation, LatLng mDestination) {
+
+        Location destination = new Location("");
+        destination.setLatitude(mDestination.latitude);
+        destination.setLongitude(mDestination.longitude);
+
+        int distance = (int)mLastLocation.distanceTo(destination);
+        String inMeters = " ( " + distance + "m )";
+        StringBuilder stringBuilder = new StringBuilder("");
+
+        if(distance < 10)
+            return stringBuilder.append(getString(R.string.in)).append(inMeters).toString();
+
+        if(distance <= 50)
+            return stringBuilder.append(getString(R.string.next_to)).append(inMeters).toString();
+
+        if(distance <= 100)
+            return stringBuilder.append(getString(R.string.near)).append(inMeters).toString();
+
+        if(distance <= 200)
+            return stringBuilder.append(getString(R.string.far)).append(inMeters).toString();
+
+        return stringBuilder.append(getString(R.string.too_far)).append(inMeters).toString();
     }
     //
 
@@ -244,6 +271,7 @@ public class MapsActivity extends AppCompatActivity implements
     private void selectDestination(LatLng latLng) {
 
         confirmationButton.setEnabled(true);
+        mDestination = latLng;
 
         mMap.clear();
         mMap.addMarker(new MarkerOptions().position(latLng).title("Destino"));
@@ -259,6 +287,7 @@ public class MapsActivity extends AppCompatActivity implements
 
         Log.e(TAG, "Moving camera...");
         mMap.animateCamera(cameraUpdate);
+        
     }
 
     private void restart() {
