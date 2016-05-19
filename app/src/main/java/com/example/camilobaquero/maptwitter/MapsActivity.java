@@ -45,7 +45,7 @@ public class MapsActivity extends AppCompatActivity implements
     private LatLng mDestination;
     private LocationRequest mLocationRequest;
     private PlaceAutocompleteFragment autocompleteFragment;
-    private boolean mRequestingLocationUpdates = true;
+    private boolean mDestinationSelected = false;
     private Snackbar snackbar;
 
     // UI
@@ -205,9 +205,7 @@ public class MapsActivity extends AppCompatActivity implements
                 Log.e("Longitude", String.valueOf(mLastLocation.getLongitude()));
             }
 
-            if (mRequestingLocationUpdates) {
-                startLocationUpdates();
-            }
+            startLocationUpdates();
 
         } catch (SecurityException e) {
             Log.e(TAG, "The user needs to accept the location permissions.");
@@ -233,13 +231,16 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
-        updateUI();
+        if(mDestinationSelected)
+            updateUI();
     }
 
     private void updateUI() {
         Log.e("Update", "Updating");
-        Log.e("Latitude", String.valueOf(mLastLocation.getLatitude()));
-        Log.e("Longitude", String.valueOf(mLastLocation.getLongitude()));
+        snackbar.setText(calculateDistance(mLastLocation, mDestination));
+        if(!snackbar.isShown()) {
+            snackbar.show();
+        }
     }
 
     private void setAutoCompleteFragment() {
@@ -270,8 +271,9 @@ public class MapsActivity extends AppCompatActivity implements
 
     private void selectDestination(LatLng latLng) {
 
-        confirmationButton.setEnabled(true);
         mDestination = latLng;
+        mDestinationSelected = true;
+        confirmationButton.setEnabled(true);
 
         mMap.clear();
         mMap.addMarker(new MarkerOptions().position(latLng).title("Destino"));
@@ -291,12 +293,14 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private void restart() {
+        mDestinationSelected = false;
         mMap.clear();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 15));
         confirmationButton.setEnabled(false);
         autocompleteFragment.setText("");
         snackbar.dismiss();
         animateMapPadding(false);
+        mDestination = new LatLng(0,0);
     }
 
     private void animateMapPadding (boolean up) {
