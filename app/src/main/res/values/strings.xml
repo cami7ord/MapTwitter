@@ -8,6 +8,7 @@
 
     <!-- MESSAGES -->
 
+    <string name="notification_title">Barrera superada!</string>
     <string name="too_far">Estás muy lejos del punto objetivo</string>
     <string name="far">Estás lejos del punto objetivo</string>
     <string name="near">Estás próximo al punto objetivo</string>

@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.location.Location;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
@@ -225,12 +226,37 @@ public class MapsActivity extends AppCompatActivity implements
     @Override
     public void onLocationChanged(Location location) {
 
-        notificateUser();
-
         Log.e("Update", "Updating Location");
+        Location oldLocation = mLastLocation;
+
         mLastLocation = location;
-        if(mDestinationSelected)
+        if(mDestinationSelected) {
             updateUI();
+
+            if(compareLocations(oldLocation, location)) {
+                notificateUser();
+            }
+        }
+    }
+
+    private boolean compareLocations(Location oldLocation, Location newLocation) {
+        Log.e("Update", "Comparing locations");
+
+        Location destination = new Location("");
+        destination.setLatitude(mDestination.latitude);
+        destination.setLongitude(mDestination.longitude);
+
+        int oldDistance = (int)oldLocation.distanceTo(destination);
+        int newDistance = (int)newLocation.distanceTo(destination);
+
+        Log.e("Comparing", "Old: " + oldDistance + " vs " + "New: " + newDistance);
+
+        if(oldDistance > 200 && newDistance <= 200) return true;
+        if(oldDistance > 100 && newDistance <= 100) return true;
+        if(oldDistance > 50 && newDistance <= 50) return true;
+        if(oldDistance > 10 && newDistance <= 10) return true;
+
+        return false;
     }
 
     private void updateUI() {
@@ -360,30 +386,29 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private void notificateUser() {
-        Log.e(TAG, "NOTIFICATION!!!");
-        if(mDestinationSelected) {
 
-            Log.e("Sending Notification", "Titulo" + " : " + "Mensaje");
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
-            Notification.Builder mBuilder =
-                    new Notification.Builder(this)
-                            .setSmallIcon(R.mipmap.ic_launcher)
-                            .setContentTitle("CoderoMusicPlayer")
-                            .setContentText("PLayer0!");
+        Notification.Builder mBuilder =
+                new Notification.Builder(this)
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle(getString(R.string.notification_title))
+                        .setContentText(calculateDistance(mLastLocation, mDestination))
+                        .setSound(defaultSoundUri).setVibrate(new long[]{1000, 1000, 1000, 1000, 1000})
+                        .setPriority(Notification.PRIORITY_HIGH);
 
-            Intent resultIntent = new Intent(this, MapsActivity.class);
-            resultIntent.setAction(Intent.ACTION_MAIN);
-            resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        Intent resultIntent = new Intent(this, MapsActivity.class);
+        resultIntent.setAction(Intent.ACTION_MAIN);
+        resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                    resultIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                resultIntent, 0);
 
-            mBuilder.setContentIntent(pendingIntent);
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            mNotificationManager.notify(1, mBuilder.build());
+        mBuilder.setContentIntent(pendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mNotificationManager.notify(1, mBuilder.build());
 
-        }
     }
 
     private void tweetMessage(LatLng latLng) {
