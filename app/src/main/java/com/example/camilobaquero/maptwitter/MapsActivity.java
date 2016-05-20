@@ -254,7 +254,12 @@ public class MapsActivity extends AppCompatActivity implements
         if(oldDistance > 200 && newDistance <= 200) return true;
         if(oldDistance > 100 && newDistance <= 100) return true;
         if(oldDistance > 50 && newDistance <= 50) return true;
-        if(oldDistance > 10 && newDistance <= 10) return true;
+        if(oldDistance > 10 && newDistance <= 10) {
+
+            tweetMessage(new LatLng(newLocation.getLatitude(),newLocation.getLongitude()));
+
+            return true;
+        }
 
         return false;
     }
