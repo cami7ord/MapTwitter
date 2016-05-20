@@ -5,6 +5,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.util.Log;
@@ -24,6 +25,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -48,6 +50,10 @@ public class MapsActivity extends AppCompatActivity implements
     private boolean mDestinationSelected = false;
     private Snackbar snackbar;
 
+    // COLORS
+    int[] colors = new int[4];
+    int[] radius = {200, 100, 50, 10};
+
     // UI
     @BindView(R.id.coordinator_layout) CoordinatorLayout coordinatorLayout;
     @BindView(R.id.map_button_ok) AppCompatButton confirmationButton;
@@ -57,32 +63,6 @@ public class MapsActivity extends AppCompatActivity implements
         snackbar.show();
         animateMapPadding(true);
     }
-
-    private String calculateDistance(Location mLastLocation, LatLng mDestination) {
-
-        Location destination = new Location("");
-        destination.setLatitude(mDestination.latitude);
-        destination.setLongitude(mDestination.longitude);
-
-        int distance = (int)mLastLocation.distanceTo(destination);
-        String inMeters = " ( " + distance + "m )";
-        StringBuilder stringBuilder = new StringBuilder("");
-
-        if(distance < 10)
-            return stringBuilder.append(getString(R.string.in)).append(inMeters).toString();
-
-        if(distance <= 50)
-            return stringBuilder.append(getString(R.string.next_to)).append(inMeters).toString();
-
-        if(distance <= 100)
-            return stringBuilder.append(getString(R.string.near)).append(inMeters).toString();
-
-        if(distance <= 200)
-            return stringBuilder.append(getString(R.string.far)).append(inMeters).toString();
-
-        return stringBuilder.append(getString(R.string.too_far)).append(inMeters).toString();
-    }
-    //
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +76,11 @@ public class MapsActivity extends AppCompatActivity implements
 
         autocompleteFragment = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
         setAutoCompleteFragment();
+
+        colors[0] = ContextCompat.getColor(this, R.color.far);
+        colors[1] = ContextCompat.getColor(this, R.color.near);
+        colors[2] = ContextCompat.getColor(this, R.color.next_to);
+        colors[3] = ContextCompat.getColor(this, R.color.in);
 
         confirmationButton.setEnabled(false);
         snackbar = Snackbar.make(coordinatorLayout, "Destino fijado", Snackbar.LENGTH_INDEFINITE);
@@ -289,7 +274,19 @@ public class MapsActivity extends AppCompatActivity implements
 
         Log.e(TAG, "Moving camera...");
         mMap.animateCamera(cameraUpdate);
+
+        drawRangeCircles(latLng);
         
+    }
+
+    private void drawRangeCircles(LatLng latLng) {
+        for(int i=0 ; i<colors.length ; i++) {
+            mMap.addCircle(new CircleOptions()
+                    .center(latLng)
+                    .strokeWidth(1)
+                    .radius(radius[i])
+                    .fillColor(colors[i]));
+        }
     }
 
     private void restart() {
@@ -322,6 +319,31 @@ public class MapsActivity extends AppCompatActivity implements
             }
         });
         animation.start();
+    }
+
+    private String calculateDistance(Location mLastLocation, LatLng mDestination) {
+
+        Location destination = new Location("");
+        destination.setLatitude(mDestination.latitude);
+        destination.setLongitude(mDestination.longitude);
+
+        int distance = (int)mLastLocation.distanceTo(destination);
+        String inMeters = " ( " + distance + "m )";
+        StringBuilder stringBuilder = new StringBuilder("");
+
+        if(distance < 10)
+            return stringBuilder.append(getString(R.string.in)).append(inMeters).toString();
+
+        if(distance <= 50)
+            return stringBuilder.append(getString(R.string.next_to)).append(inMeters).toString();
+
+        if(distance <= 100)
+            return stringBuilder.append(getString(R.string.near)).append(inMeters).toString();
+
+        if(distance <= 200)
+            return stringBuilder.append(getString(R.string.far)).append(inMeters).toString();
+
+        return stringBuilder.append(getString(R.string.too_far)).append(inMeters).toString();
     }
 
     @Override

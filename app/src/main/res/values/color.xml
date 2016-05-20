@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="far">#990097A7</color>
+    <color name="near">#BB00ACC1</color>
+    <color name="next_to">#DD00BCD4</color>
+    <color name="in">#FFE0F7FA</color>
+</resources>
