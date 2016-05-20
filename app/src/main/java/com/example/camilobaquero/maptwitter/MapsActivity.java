@@ -1,14 +1,15 @@
 package com.example.camilobaquero.maptwitter;
 
 import android.animation.ValueAnimator;
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
@@ -223,6 +224,9 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onLocationChanged(Location location) {
+
+        notificateUser();
+
         Log.e("Update", "Updating Location");
         mLastLocation = location;
         if(mDestinationSelected)
@@ -356,20 +360,29 @@ public class MapsActivity extends AppCompatActivity implements
     }
 
     private void notificateUser() {
+        Log.e(TAG, "NOTIFICATION!!!");
         if(mDestinationSelected) {
-            NotificationCompat.Builder mBuilder =
-                    new NotificationCompat.Builder(this)
-                            .setSmallIcon(R.drawable.ic_media_play)
-                            .setContentTitle("Cambiaste de posicion")
-                            .setContentText(calculateDistance(mLastLocation, mDestination));
 
-            // Sets an ID for the notification
-            int mNotificationId = 001;
-            // Gets an instance of the NotificationManager service
-            NotificationManager mNotifyMgr =
+            Log.e("Sending Notification", "Titulo" + " : " + "Mensaje");
+
+            Notification.Builder mBuilder =
+                    new Notification.Builder(this)
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle("CoderoMusicPlayer")
+                            .setContentText("PLayer0!");
+
+            Intent resultIntent = new Intent(this, MapsActivity.class);
+            resultIntent.setAction(Intent.ACTION_MAIN);
+            resultIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    resultIntent, 0);
+
+            mBuilder.setContentIntent(pendingIntent);
+            NotificationManager mNotificationManager =
                     (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            // Builds the notification and issues it.
-            mNotifyMgr.notify(mNotificationId, mBuilder.build());
+            mNotificationManager.notify(1, mBuilder.build());
+
         }
     }
 
