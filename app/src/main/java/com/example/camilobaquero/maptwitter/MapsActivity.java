@@ -1,10 +1,14 @@
 package com.example.camilobaquero.maptwitter;
 
 import android.animation.ValueAnimator;
+import android.app.NotificationManager;
+import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
@@ -112,8 +116,14 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     protected void onStop() {
-        mGoogleApiClient.disconnect();
+        //mGoogleApiClient.disconnect();
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mGoogleApiClient.disconnect();
+        super.onDestroy();
     }
 
     @Override
@@ -172,8 +182,6 @@ public class MapsActivity extends AppCompatActivity implements
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
-                    //.addApi(Places.GEO_DATA_API)
-                    //.addApi(Places.PLACE_DETECTION_API)
                     .build();
         }
     }
@@ -215,13 +223,14 @@ public class MapsActivity extends AppCompatActivity implements
 
     @Override
     public void onLocationChanged(Location location) {
+        Log.e("Update", "Updating Location");
         mLastLocation = location;
         if(mDestinationSelected)
             updateUI();
     }
 
     private void updateUI() {
-        Log.e("Update", "Updating");
+        Log.e("Update", "Updating UI");
         snackbar.setText(calculateDistance(mLastLocation, mDestination));
         if(!snackbar.isShown()) {
             snackbar.show();
@@ -344,6 +353,38 @@ public class MapsActivity extends AppCompatActivity implements
             return stringBuilder.append(getString(R.string.far)).append(inMeters).toString();
 
         return stringBuilder.append(getString(R.string.too_far)).append(inMeters).toString();
+    }
+
+    private void notificateUser() {
+        if(mDestinationSelected) {
+            NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.drawable.ic_media_play)
+                            .setContentTitle("Cambiaste de posicion")
+                            .setContentText(calculateDistance(mLastLocation, mDestination));
+
+            // Sets an ID for the notification
+            int mNotificationId = 001;
+            // Gets an instance of the NotificationManager service
+            NotificationManager mNotifyMgr =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            // Builds the notification and issues it.
+            mNotifyMgr.notify(mNotificationId, mBuilder.build());
+        }
+    }
+
+    private void tweetMessage(LatLng latLng) {
+
+        String message = "He llegado a mi objetivo: (" + latLng.latitude + ", " + latLng.longitude + ").";
+        String mapUrl = "https://maps.googleapis.com/maps/api/staticmap?center=" + latLng.latitude + "," + latLng.longitude + "&zoom=17&sensor=false&size=300x200&scale=2";//?markers=color:red%7C%7C" + latLng.latitude + "," + latLng.longitude;
+
+        String tweetUrl = "https://twitter.com/intent/tweet?text="+message+"&url="+mapUrl;
+
+        Log.e(TAG, "Tweet: " + tweetUrl);
+
+        Uri uri = Uri.parse(tweetUrl);
+        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+
     }
 
     @Override
